@@ -108,6 +108,16 @@ func TestGetCredsProviderFromWebIdentityConfig(t *testing.T) {
 			&Config{Region: "region", Service: "service", AssumeRole: AssumeRole{ARN: "arn:aws:iam::123456789012:role/my_role", WebIdentityTokenFile: "testdata/no_token_file"}},
 			true,
 		},
+		{
+			"valid_token_endpoint",
+			&Config{Region: "region", Service: "service", AssumeRole: AssumeRole{ARN: "arn:aws:iam::123456789012:role/my_role", WebIdentityTokenEndpoint: "testdata/token_endpoint"}},
+			false,
+		},
+		{
+			"invalid_token_endpoint",
+			&Config{Region: "region", Service: "service", AssumeRole: AssumeRole{ARN: "arn:aws:iam::123456789012:role/my_role", WebIdentityTokenEndpoint: "testdata/invalid_token_endpoint"}},
+			true,
+		},
 	}
 	// run tests
 	for _, testcase := range tests {

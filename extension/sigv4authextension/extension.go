@@ -90,10 +90,11 @@ func getCredsProviderFromConfig(cfg *Config) (*aws.CredentialsProvider, error) {
 }
 
 func getCredsProviderFromWebIdentityConfig(cfg *Config) (*aws.CredentialsProvider, error) {
-	tokenRetriever := stscreds.IdentityTokenRetriever(
-		stscreds.IdentityTokenFile(cfg.AssumeRole.WebIdentityTokenFile),
-	)
-	_, err := tokenRetriever.GetIdentityToken()
+	tokenRetriever, err := getIdentityTokenRetrieverFromConfig(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get identityTokenRetriever: %w", err)
+	}
+	_, err = tokenRetriever.GetIdentityToken()
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve token file: %w", err)
 	}
@@ -116,4 +117,18 @@ func getCredsProviderFromWebIdentityConfig(cfg *Config) (*aws.CredentialsProvide
 	awscfg.Credentials = aws.NewCredentialsCache(provider)
 
 	return &awscfg.Credentials, nil
+}
+
+func getIdentityTokenRetrieverFromConfig(cfg *Config) (stscreds.IdentityTokenRetriever, error) {
+	if cfg.AssumeRole.WebIdentityTokenFile != "" {
+		return stscreds.IdentityTokenRetriever(
+			stscreds.IdentityTokenFile(cfg.AssumeRole.WebIdentityTokenFile),
+		), nil
+	} else if cfg.AssumeRole.WebIdentityTokenEndpoint != "" {
+		return stscreds.IdentityTokenRetriever(
+			IdentityTokenEndpoint(cfg.AssumeRole.WebIdentityTokenEndpoint),
+		), nil
+	} else {
+		return nil, fmt.Errorf("no IdentityTokenRetriever provided")
+	}
 }
