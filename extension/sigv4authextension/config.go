@@ -21,10 +21,11 @@ type Config struct {
 
 // AssumeRole holds the configuration needed to assume a role
 type AssumeRole struct {
-	ARN                  string `mapstructure:"arn,omitempty"`
-	SessionName          string `mapstructure:"session_name,omitempty"`
-	STSRegion            string `mapstructure:"sts_region,omitempty"`
-	WebIdentityTokenFile string `mapstructure:"web_identity_token_file,omitempty"`
+	ARN                      string `mapstructure:"arn,omitempty"`
+	SessionName              string `mapstructure:"session_name,omitempty"`
+	STSRegion                string `mapstructure:"sts_region,omitempty"`
+	WebIdentityTokenFile     string `mapstructure:"web_identity_token_file,omitempty"`
+	WebIdentityTokenEndpoint string `mapstructure:"web_identity_token_endpoint,omitempty"`
 }
 
 // compile time check that the Config struct satisfies the component.Config interface
@@ -38,9 +39,13 @@ func (cfg *Config) Validate() error {
 		cfg.AssumeRole.STSRegion = cfg.Region
 	}
 
+	if cfg.AssumeRole.WebIdentityTokenFile != "" && cfg.AssumeRole.WebIdentityTokenEndpoint != "" {
+		return errors.New("either configure web_identity_token_file or web_identity_token_endpoint")
+	}
+
 	var credsProvider *aws.CredentialsProvider
 	var err error
-	if cfg.AssumeRole.WebIdentityTokenFile != "" {
+	if cfg.AssumeRole.WebIdentityTokenFile != "" || cfg.AssumeRole.WebIdentityTokenEndpoint != "" {
 		if cfg.AssumeRole.ARN == "" {
 			return errors.New("must specify ARN when using WebIdentityTokenFile")
 		}
